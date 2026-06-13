@@ -1,76 +1,146 @@
 # AI Bureau
 
-Двуязычный сайт AI Bureau и публикатор одобренных статей из Notion.
+AI Bureau — двуязычный сайт бюро и контентная система, которая связывает
+Notion, ручной поиск подтверждающих материалов, Python-публикатор, GitHub и
+Hugo.
 
-## Архитектура
+> Машини повинні працювати. Люди повинні думати.
+
+## Текущее состояние
+
+- Публичный сайт: <https://ai-bureau.github.io/>
+- Репозиторий: <https://github.com/ai-bureau/ai-bureau.github.io>
+- Основная ветка: `main`
+- GitHub Pages: GitHub Actions workflow
+- Основной язык сайта: украинский
+- Второй язык: английский
+- Поиск статей: вручную с помощью Codex
+- Одобрение публикации: статус `Публікувати` в Notion
+- Запуск публикатора: вручную, один проход за запуск
+- Полный цикл `Notion → GitHub → Hugo → сайт` проверен 13 июня 2026 года
+
+## Назначение проекта
+
+AI Bureau помогает находить интеллектуальную рутину в рабочих процессах и
+передавать её проверяемым AI-системам. Контент сайта объясняет эту позицию и
+подтверждает её материалами авторитетных авторов.
+
+Проект состоит из трёх частей:
+
+1. **Поиск статей.** Codex вручную ищет материалы, подтверждающие тезисы AI
+   Bureau, проверяет релевантность и добавляет карточки в Notion.
+2. **Публикатор.** Python-скрипт публикует только явно одобренные статьи.
+3. **Сайт.** Hugo собирает двуязычный статический сайт, GitHub Actions
+   публикует его на GitHub Pages.
+
+## Общий поток
 
 ```text
-Тезисы Notion
+Тезисы в Notion
     ↓
-Codex вручную ищет подтверждающие статьи
+Codex вручную ищет и проверяет статьи
     ↓
-Таблица «Статьи» в Notion
-    ↓ статус «Публікувати»
-Python publisher
-    ↓ GitHub Contents API
-Hugo + GitHub Actions
+Статьи в Notion: Знайдена → На review → Публікувати
     ↓
-ai-bureau.github.io
+python -m publisher --env-file actual.env
+    ↓
+Markdown-коммит в GitHub через Contents API
+    ↓
+GitHub Actions собирает Hugo
+    ↓
+https://ai-bureau.github.io/
+    ↓
+Статус статьи в Notion: Опубліковано
 ```
 
-### Сайт
+## Быстрый старт
 
-- Hugo Extended `0.163.1`
-- PaperMod, закреплённый на конкретном commit
-- украинский раздел: `content/uk/`
-- английский раздел: `content/en/`
-- GitHub Pages workflow: `.github/workflows/hugo.yaml`
+### Проверить сайт локально
 
-### Публикатор
+Из Windows PowerShell:
 
-Публикатор выполняет один проход и завершается:
+```powershell
+.\start-site.bat
+```
 
-1. Запрашивает в Notion статьи со статусом `Публікувати` и пустым полем `Опубліковано`.
-2. Проверяет обязательные поля и пропускает невалидные карточки.
-3. Получает названия связанных тезисов.
-4. Генерирует Hugo Markdown.
-5. Подбирает свободный slug в GitHub.
-6. Создаёт файл через GitHub Contents API.
-7. Только после успешного GitHub-коммита меняет статус Notion на `Опубліковано`.
+Открыть <http://localhost:1313/>. Остановка: `Ctrl+C`.
 
-Если GitHub-коммит прошёл, но Notion временно не обновился, следующий запуск узнает
-идентичный файл и завершит обновление Notion без создания дубликата.
+### Проверить готовые публикации без изменений
 
-## Модули публикатора
-
-- `publisher/config.py` — загрузка и валидация `.env`
-- `publisher/notion_gateway.py` — актуальный Notion Data Source API
-- `publisher/github_gateway.py` — GitHub Contents API
-- `publisher/renderer.py` — Hugo Markdown и front matter
-- `publisher/slug.py` — транслитерация и slug
-- `publisher/service.py` — порядок публикации и идемпотентность
-- `publisher/http.py` — повтор внешних запросов
-
-## Команды
-
-```bash
-# Локальный сайт
-./start-site.sh
-
-# Один проход публикатора
-python -m publisher
-
-# Проверка без записей в GitHub и Notion
-python -m publisher --dry-run
-
-# Использовать другой env-файл
+```powershell
 python -m publisher --env-file actual.env --dry-run
-
-# Тесты
-python -m pytest
-
-# Production-сборка сайта
-.tools/hugo/hugo --gc --minify --cleanDestinationDir
 ```
 
-Подробная настройка описана в [HOW_TO_USE.md](HOW_TO_USE.md).
+### Опубликовать одобренные статьи
+
+```powershell
+python -m publisher --env-file actual.env
+```
+
+Или:
+
+```powershell
+.\start-publisher.bat
+```
+
+### Запустить тесты
+
+```powershell
+python -m pytest
+```
+
+## Структура репозитория
+
+```text
+.
+├── .github/workflows/hugo.yaml   # сборка и деплой GitHub Pages
+├── assets/css/extended/          # фирменные стили поверх PaperMod
+├── content/
+│   ├── uk/                       # украинский контент
+│   └── en/                       # английский контент
+├── docs/                         # подробная документация
+├── layouts/                      # собственные Hugo-шаблоны
+├── publisher/                    # Python-публикатор
+├── tests/                        # автоматические тесты публикатора
+├── themes/PaperMod/              # Git submodule темы
+├── hugo.toml                     # конфигурация сайта
+├── actual.env                    # реальные секреты, не хранится в Git
+├── start-site.bat                # локальный сайт из Windows
+└── start-publisher.bat           # один запуск публикатора
+```
+
+## Ключевые гарантии публикатора
+
+- Публикуются только записи со статусом `Публікувати`.
+- Уже опубликованные записи не выбираются повторно.
+- Notion обновляется только после успешного GitHub-коммита.
+- Повторный запуск распознаёт уже созданный идентичный файл и не создаёт
+  дубликат.
+- Коллизии slug получают суффиксы `-2`, `-3` и далее.
+- Будущая `Дата публікації` создаёт файл сразу, но Hugo скрывает статью до даты.
+- Невалидная карточка пропускается и не блокирует остальные.
+- Ошибки записываются в ежедневный лог.
+
+## Документация
+
+- [HOW_TO_USE.md](HOW_TO_USE.md) — ежедневная инструкция владельца
+- [AGENTS.md](AGENTS.md) — обязательные правила для AI-агентов
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — техническая архитектура
+- [docs/CONTENT_WORKFLOW.md](docs/CONTENT_WORKFLOW.md) — поиск и публикация контента
+- [docs/NOTION_SCHEMA.md](docs/NOTION_SCHEMA.md) — точная схема Notion
+- [docs/OPERATIONS.md](docs/OPERATIONS.md) — эксплуатация и восстановление
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) — разработка и тестирование
+- [docs/SECURITY.md](docs/SECURITY.md) — секреты и разрешения
+- [docs/DECISIONS.md](docs/DECISIONS.md) — принятые решения и причины
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — диагностика проблем
+- [CHANGELOG.md](CHANGELOG.md) — история значимых изменений
+
+## Источники требований
+
+Исходные технические задания сохранены для истории:
+
+- [tz-ai-bureau-site.md](tz-ai-bureau-site.md)
+- [tz-codex-article-finder.md](tz-codex-article-finder.md)
+
+Фактическая работа системы и документы в `docs/` имеют приоритет над старыми
+формулировками ТЗ, если они расходятся.
