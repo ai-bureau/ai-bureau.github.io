@@ -12,12 +12,14 @@
 ## Обычный запуск публикатора
 
 ```powershell
-python -m publisher --env-file actual.env --dry-run
-python -m publisher --env-file actual.env
+wsl.exe --cd . python3 -m publisher --env-file actual.env --dry-run
+.\start-publisher.bat
 ```
 
 Публикатор выполняет один проход и завершается. Рекомендуемая текущая модель —
 ручной запуск раз в сутки или сразу после одобрения статьи.
+
+Batch-файл использует настроенное окружение WSL и остаётся открытым при ошибке.
 
 ## Exit codes
 
@@ -101,4 +103,3 @@ Notion, особенно перед изменением схемы.
 4. проверить локальный сайт;
 5. выполнить push и проверить публичные маршруты;
 6. обновить `CHANGELOG.md`.
-

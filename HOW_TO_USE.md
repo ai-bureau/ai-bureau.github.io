@@ -22,7 +22,7 @@
 Из PowerShell в папке проекта:
 
 ```powershell
-python -m publisher --env-file actual.env --dry-run
+wsl.exe --cd . python3 -m publisher --env-file actual.env --dry-run
 ```
 
 Ожидаемый результат при готовой статье:
@@ -40,7 +40,7 @@ python -m publisher --env-file actual.env --dry-run
 ### 3. Опубликовать
 
 ```powershell
-python -m publisher --env-file actual.env
+wsl.exe --cd . python3 -m publisher --env-file actual.env
 ```
 
 Или двойным кликом/из PowerShell:
@@ -48,6 +48,9 @@ python -m publisher --env-file actual.env
 ```powershell
 .\start-publisher.bat
 ```
+
+`start-publisher.bat` запускает настроенное Python-окружение через WSL. При
+ошибке окно останется открытым и покажет exit code.
 
 После успешной публикации:
 

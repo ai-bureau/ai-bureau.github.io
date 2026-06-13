@@ -80,6 +80,8 @@ class PublisherService:
             try:
                 result = self._publish_article(article)
                 published_count += 1
+                if self._dry_run:
+                    continue
                 action = "already exists" if result.already_exists else "published"
                 self._logger.info(
                     "[OK] %s: %s -> %s", action, article.title, result.path

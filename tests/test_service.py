@@ -127,19 +127,24 @@ def test_github_failure_does_not_mark_notion() -> None:
     assert service.had_errors is True
 
 
-def test_dry_run_writes_nothing() -> None:
-    """Dry-run validates paths without external writes."""
+def test_dry_run_writes_nothing_and_does_not_report_publication(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Dry-run validates paths without writes or a false publication message."""
 
     notion = FakeNotion([make_article()])
     github = FakeGitHub()
 
-    count = PublisherService(
-        notion,
-        github,
-        logging.getLogger("test"),
-        dry_run=True,
-    ).run()
+    with caplog.at_level(logging.INFO):
+        count = PublisherService(
+            notion,
+            github,
+            logging.getLogger("test"),
+            dry_run=True,
+        ).run()
 
     assert count == 1
     assert github.created == []
     assert notion.marked == []
+    assert "[DRY RUN] Test Article -> content/en/blog/test-article.md" in caplog.text
+    assert "[OK] published" not in caplog.text

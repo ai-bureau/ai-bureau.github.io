@@ -81,6 +81,18 @@ destination=$(mktemp -d /tmp/ai-bureau-build-XXXXXX)
 wsl bash ./start-site.sh
 ```
 
+## `start-publisher.bat` сообщает ошибку
+
+Окно остаётся открытым и показывает exit code. Сначала проверь WSL и dry-run:
+
+```powershell
+wsl.exe --cd . python3 -m publisher --env-file actual.env --dry-run
+```
+
+Затем проверь свежие записи в `logs/publisher_YYYY-MM-DD.log`. Если лог не
+создан, ошибка произошла до запуска Python: обычно недоступен WSL или команда
+запущена не из папки проекта.
+
 ## В `public/` осталась удалённая статья
 
 `public/` — локальный игнорируемый результат сборки и может содержать старые
@@ -93,4 +105,3 @@ wsl bash ./start-site.sh
 - эксплуатация: [OPERATIONS.md](OPERATIONS.md);
 - схема Notion: [NOTION_SCHEMA.md](NOTION_SCHEMA.md);
 - безопасность: [SECURITY.md](SECURITY.md).
-
