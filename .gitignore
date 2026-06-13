@@ -1,0 +1,13 @@
+/public/
+/resources/_gen/
+/.hugo_build.lock
+/hugo_stats.json
+/.tools/
+/.env
+/.venv/
+/logs/
+/__pycache__/
+/.pytest_cache/
+*.py[cod]
+/codex start.bat
+/codex start.txt

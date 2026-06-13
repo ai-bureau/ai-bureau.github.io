@@ -1,0 +1,96 @@
+baseURL = "https://ai-bureau.github.io/"
+title = "AI Bureau"
+theme = "PaperMod"
+defaultContentLanguage = "uk"
+defaultContentLanguageInSubdir = false
+enableRobotsTXT = true
+enableGitInfo = false
+timeZone = "Europe/Kyiv"
+
+[build]
+  writeStats = true
+
+[params]
+  env = "development"
+  description = "AI Bureau передає рутину машині, щоб людина могла думати, творити і жити."
+  defaultTheme = "light"
+  disableThemeToggle = true
+  displayFullLangName = true
+  ShowReadingTime = true
+  ShowShareButtons = false
+  ShowPostNavLinks = true
+  ShowBreadCrumbs = true
+  ShowCodeCopyButtons = true
+  mainSections = ["blog"]
+  telegramURL = "https://t.me/ai_bureau"
+
+  [params.label]
+    text = "AI Bureau"
+
+[languages]
+  [languages.uk]
+    locale = "uk-UA"
+    label = "UA"
+    languageAltTitle = "Українська"
+    contentDir = "content/uk"
+    weight = 1
+    title = "AI Bureau"
+
+    [languages.uk.params]
+      description = "Передаємо рутину машині. Залишаємо людині — думати."
+      [languages.uk.params.footer]
+        hideCopyright = false
+        text = "Машини працюють. Люди думають."
+
+    [[languages.uk.menu.main]]
+      name = "Для кого"
+      url = "/dlya-koho/"
+      weight = 10
+    [[languages.uk.menu.main]]
+      name = "Послуги"
+      url = "/posluhy/"
+      weight = 20
+    [[languages.uk.menu.main]]
+      name = "Блог"
+      url = "/blog/"
+      weight = 30
+    [[languages.uk.menu.main]]
+      name = "Про нас"
+      url = "/pro-nas/"
+      weight = 40
+
+  [languages.en]
+    locale = "en-US"
+    label = "EN"
+    languageAltTitle = "English"
+    contentDir = "content/en"
+    weight = 2
+    title = "AI Bureau"
+
+    [languages.en.params]
+      description = "We hand routine work to machines, leaving people free to think."
+      [languages.en.params.footer]
+        hideCopyright = false
+        text = "Machines work. People think."
+
+    [[languages.en.menu.main]]
+      name = "For whom"
+      url = "/for-whom/"
+      weight = 10
+    [[languages.en.menu.main]]
+      name = "Services"
+      url = "/services/"
+      weight = 20
+    [[languages.en.menu.main]]
+      name = "Blog"
+      url = "/blog/"
+      weight = 30
+    [[languages.en.menu.main]]
+      name = "About"
+      url = "/about/"
+      weight = 40
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = false

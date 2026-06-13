@@ -1,0 +1,73 @@
+{{- define "main" }}
+{{- $isBlog := eq .Section "blog" -}}
+{{- $isUK := eq .Lang "uk" -}}
+
+<article class="post-single {{ if $isBlog }}bureau-article{{ else }}bureau-page{{ end }}">
+  <header class="post-header">
+    {{ partial "breadcrumbs.html" . }}
+    {{- if $isBlog }}
+    <div class="bureau-article-label">
+      <span>{{ if $isUK }}Матеріал AI Bureau{{ else }}AI Bureau reading{{ end }}</span>
+      <span>{{ .Lang | upper }}</span>
+    </div>
+    {{- end }}
+    <h1 class="post-title">{{ .Title }}</h1>
+    {{- with .Description }}
+    <div class="post-description">{{ . }}</div>
+    {{- end }}
+    {{- if not (.Param "hideMeta") }}
+    <div class="post-meta">
+      {{- partial "post_meta.html" . -}}
+      {{- partial "translation_list.html" . -}}
+    </div>
+    {{- end }}
+  </header>
+
+  {{- if and $isBlog (or .Params.sourceURL .Params.thesis) }}
+  <aside class="bureau-article-context">
+    {{- with .Params.sourceURL }}
+    <div>
+      <span>{{ if $isUK }}Оригінал{{ else }}Original{{ end }}</span>
+      <a href="{{ . }}" target="_blank" rel="noopener">{{ $.Params.sourceName | default $.Title }} ↗</a>
+    </div>
+    {{- end }}
+    {{- with .Params.thesis }}
+    <div>
+      <span>{{ if $isUK }}Позиція AI Bureau{{ else }}AI Bureau position{{ end }}</span>
+      <p>{{ . }}</p>
+    </div>
+    {{- end }}
+  </aside>
+  {{- end }}
+
+  {{- if .Content }}
+  <div class="post-content md-content">
+    {{- if not (.Param "disableAnchoredHeadings") }}
+    {{- partial "anchored_headings.html" .Content -}}
+    {{- else }}{{ .Content }}{{ end }}
+  </div>
+  {{- end }}
+
+  {{- if $isBlog }}
+  <aside class="bureau-article-cta">
+    <p>{{ if $isUK }}Є що додати або заперечити?{{ else }}Have something to add or challenge?{{ end }}</p>
+    <a href="{{ site.Params.telegramURL }}" target="_blank" rel="noopener">
+      {{ if $isUK }}Обговорити в Telegram{{ else }}Discuss on Telegram{{ end }} ↗
+    </a>
+  </aside>
+  {{- end }}
+
+  <footer class="post-footer">
+    {{- $tags := .Language.Params.Taxonomies.tag | default "tags" }}
+    <ul class="post-tags">
+      {{- range ($.GetTerms $tags) }}
+      <li><a href="{{ .Permalink }}">{{ .LinkTitle }}</a></li>
+      {{- end }}
+    </ul>
+    {{- if (.Param "ShowPostNavLinks") }}
+    {{- partial "post_nav_links.html" . }}
+    {{- end }}
+  </footer>
+</article>
+{{- end }}
+

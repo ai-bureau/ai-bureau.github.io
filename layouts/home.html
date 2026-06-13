@@ -1,0 +1,119 @@
+{{ define "main" }}
+{{- $isUK := eq .Lang "uk" -}}
+<div class="bureau-home">
+  <section class="bureau-hero">
+    <div class="bureau-kicker">
+      <span class="bureau-status-dot"></span>
+      {{ if $isUK }}AI-системи з людиною в контурі{{ else }}Human-centered AI systems{{ end }}
+    </div>
+    <h1>
+      {{ if $isUK }}
+        Машини повинні працювати.<br><strong>Люди повинні думати.</strong>
+      {{ else }}
+        Machines should work.<br><strong>People should think.</strong>
+      {{ end }}
+    </h1>
+    <p class="bureau-hero-copy">
+      {{ if $isUK }}
+        AI Bureau знаходить рутину у ваших процесах і передає її машині — щоб ви могли думати, творити і жити.
+      {{ else }}
+        AI Bureau finds routine work in your processes and hands it to machines — so you can think, create, and live.
+      {{ end }}
+    </p>
+    <div class="bureau-actions">
+      <a class="bureau-button bureau-button-primary" href="{{ site.Params.telegramURL }}" target="_blank" rel="noopener">
+        {{ if $isUK }}Написати нам{{ else }}Talk to us{{ end }}
+        <span aria-hidden="true">↗</span>
+      </a>
+      <a class="bureau-button bureau-button-secondary" href="{{ if $isUK }}/posluhy/{{ else }}/en/services/{{ end }}">
+        {{ if $isUK }}Як ми працюємо{{ else }}How we work{{ end }}
+      </a>
+    </div>
+    <p class="bureau-attribution">IBM, 1967</p>
+  </section>
+
+  <section class="bureau-process" aria-label="{{ if $isUK }}Процес роботи{{ else }}Our process{{ end }}">
+    <div class="bureau-process-step">
+      <span>01</span>
+      <strong>{{ if $isUK }}Помічаємо рутину{{ else }}Spot the routine{{ end }}</strong>
+      <p>{{ if $isUK }}Повторювану роботу, яка забирає увагу й час.{{ else }}Repeated work that consumes attention and time.{{ end }}</p>
+    </div>
+    <div class="bureau-process-arrow" aria-hidden="true">→</div>
+    <div class="bureau-process-step">
+      <span>02</span>
+      <strong>{{ if $isUK }}Будуємо систему{{ else }}Build the system{{ end }}</strong>
+      <p>{{ if $isUK }}Передаємо перевірювані дії AI та простим скриптам.{{ else }}Hand verifiable actions to AI and simple scripts.{{ end }}</p>
+    </div>
+    <div class="bureau-process-arrow" aria-hidden="true">→</div>
+    <div class="bureau-process-step">
+      <span>03</span>
+      <strong>{{ if $isUK }}Людина вирішує{{ else }}People decide{{ end }}</strong>
+      <p>{{ if $isUK }}Відповідальність і важливі рішення залишаються у вас.{{ else }}Responsibility and important decisions remain yours.{{ end }}</p>
+    </div>
+  </section>
+
+  <section class="bureau-section">
+    <div class="bureau-section-heading">
+      <span>{{ if $isUK }}Для кого{{ else }}For whom{{ end }}</span>
+      <h2>{{ if $isUK }}У вас не забагато роботи.<br>У вас забагато рутини.{{ else }}You do not have too much work.<br>You have too much routine.{{ end }}</h2>
+    </div>
+    <div class="bureau-card-grid">
+      <article class="bureau-card">
+        <span class="bureau-card-index">01</span>
+        <h3>{{ if $isUK }}Підприємці{{ else }}Entrepreneurs{{ end }}</h3>
+        <p>{{ if $isUK }}Стандартне спілкування, документи, моніторинг і пошук інформації.{{ else }}Standard communication, documents, monitoring, and research.{{ end }}</p>
+      </article>
+      <article class="bureau-card">
+        <span class="bureau-card-index">02</span>
+        <h3>{{ if $isUK }}Волонтери та НКО{{ else }}Volunteers and NGOs{{ end }}</h3>
+        <p>{{ if $isUK }}Гранти, звітність, логістика та листування, які відволікають від місії.{{ else }}Grants, reporting, logistics, and correspondence that distract from the mission.{{ end }}</p>
+      </article>
+      <article class="bureau-card">
+        <span class="bureau-card-index">03</span>
+        <h3>{{ if $isUK }}Фрілансери та експерти{{ else }}Freelancers and experts{{ end }}</h3>
+        <p>{{ if $isUK }}Адміністративна робота, що з'їдає час для основної справи.{{ else }}Administrative work that consumes time meant for your core craft.{{ end }}</p>
+      </article>
+    </div>
+    <a class="bureau-text-link" href="{{ if $isUK }}/dlya-koho/{{ else }}/en/for-whom/{{ end }}">
+      {{ if $isUK }}Подивитися живі приклади{{ else }}See real examples{{ end }} <span>→</span>
+    </a>
+  </section>
+
+  <section class="bureau-manifesto">
+    <p class="bureau-manifesto-label">{{ if $isUK }}Наша позиція{{ else }}Our position{{ end }}</p>
+    <blockquote>
+      {{ if $isUK }}
+        Ми не забираємо роботу.<br><strong>Ми забираємо рутину.</strong>
+      {{ else }}
+        We do not take away work.<br><strong>We take away routine.</strong>
+      {{ end }}
+    </blockquote>
+    <div class="bureau-principles">
+      <p>{{ if $isUK }}Людина залишається в контурі прийняття рішень.{{ else }}People remain in the decision-making loop.{{ end }}</p>
+      <p>{{ if $isUK }}Довіряємо AI тільки те, що можна перевірити.{{ else }}We delegate to AI only what can be verified.{{ end }}</p>
+      <p>{{ if $isUK }}Прості системи важливіші за складні фреймворки.{{ else }}Simple systems matter more than complex frameworks.{{ end }}</p>
+    </div>
+  </section>
+
+  <section class="bureau-section bureau-case">
+    <div class="bureau-case-copy">
+      <span class="bureau-eyebrow">{{ if $isUK }}Живий приклад · Grant Hunter{{ else }}Live example · Grant Hunter{{ end }}</span>
+      <h2>{{ if $isUK }}Один оператор замість команди{{ else }}One operator instead of a team{{ end }}</h2>
+      <p>{{ if $isUK }}Claude шукає гранти, перевіряє можливості, готує листи та звіти. Людина приймає рішення «так» або «ні» і контролює результат.{{ else }}Claude finds grants, verifies opportunities, prepares letters and reports. A person makes the yes-or-no decisions and controls the result.{{ end }}</p>
+    </div>
+    <div class="bureau-case-diagram">
+      <div><small>AI</small><strong>{{ if $isUK }}Виконує логічну роботу{{ else }}Does the logical work{{ end }}</strong></div>
+      <span>+</span>
+      <div><small>{{ if $isUK }}Людина{{ else }}Human{{ end }}</small><strong>{{ if $isUK }}Перевіряє та вирішує{{ else }}Verifies and decides{{ end }}</strong></div>
+    </div>
+  </section>
+
+  <section class="bureau-cta">
+    <p>{{ if $isUK }}Яку рутину ви досі називаєте своєю роботою?{{ else }}What routine do you still call your work?{{ end }}</p>
+    <a href="{{ site.Params.telegramURL }}" target="_blank" rel="noopener">
+      {{ if $isUK }}Обговорити вашу задачу{{ else }}Discuss your task{{ end }} <span>↗</span>
+    </a>
+  </section>
+</div>
+{{ end }}
+
