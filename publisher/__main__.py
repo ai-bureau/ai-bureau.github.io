@@ -28,10 +28,15 @@ def main() -> int:
         action="store_true",
         help="validate and select paths without modifying GitHub or Notion",
     )
+    parser.add_argument(
+        "--env-file",
+        default=".env",
+        help="path to the environment file (default: .env)",
+    )
     args = parser.parse_args()
 
     try:
-        settings = load_settings()
+        settings = load_settings(args.env_file)
         logger = configure_logging(settings.log_dir)
         notion = NotionGateway(
             settings.notion_token,

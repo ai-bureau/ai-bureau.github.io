@@ -64,6 +64,14 @@ LOG_DIR=logs
 
 `.env` исключён из Git и не должен публиковаться.
 
+Можно использовать файл с другим именем, например `actual.env`:
+
+```powershell
+python -m publisher --env-file actual.env --dry-run
+```
+
+`actual.env` также исключён из Git.
+
 ## 5. Проверка перед первой публикацией
 
 Запусти:

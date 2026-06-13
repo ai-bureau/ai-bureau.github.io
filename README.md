@@ -63,6 +63,9 @@ python -m publisher
 # Проверка без записей в GitHub и Notion
 python -m publisher --dry-run
 
+# Использовать другой env-файл
+python -m publisher --env-file actual.env --dry-run
+
 # Тесты
 python -m pytest
 

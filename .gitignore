@@ -4,6 +4,7 @@
 /hugo_stats.json
 /.tools/
 /.env
+/actual.env
 /.venv/
 /logs/
 /__pycache__/
