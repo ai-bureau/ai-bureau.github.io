@@ -88,7 +88,7 @@ destination=$(mktemp -d /tmp/ai-bureau-build-XXXXXX)
 Сохраняй порядок:
 
 ```text
-получить → валидировать → отрендерить → проверить путь → commit GitHub → update Notion
+получить → валидировать → отрендерить UA+EN → проверить пути → один commit GitHub → update Notion
 ```
 
 Не меняй порядок GitHub/Notion без отдельного анализа согласованности.
@@ -111,4 +111,3 @@ git diff --check
 Тема подключена submodule и закреплена на конкретном commit. Не редактируй
 файлы внутри `themes/PaperMod`. Переопределения размещай в корневых `layouts/`
 и `assets/`.
-

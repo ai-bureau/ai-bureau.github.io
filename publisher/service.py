@@ -1,27 +1,26 @@
-"""Coordinate article validation, rendering, GitHub publishing, and Notion updates.
+"""Coordinate bilingual rendering, GitHub publishing, and Notion updates.
 
 Input: Notion and GitHub gateways.
 Output: one completed publication pass.
 """
 
 import logging
-from datetime import datetime
 from collections.abc import Callable
+from datetime import datetime
 from typing import Protocol
 
-from publisher.models import Article, PublicationResult
+from publisher.models import Publication, PublicationResult
 from publisher.renderer import render_article
-from publisher.slug import generate_slug
 
 
 class NotionPort(Protocol):
     """Describe Notion operations consumed by the publishing service."""
 
-    def get_articles_to_publish(self) -> list[Article]:
-        """Return articles approved for publication."""
+    def get_publications_to_publish(self) -> list[Publication]:
+        """Return bilingual publications approved by the owner."""
 
     def mark_published(self, page_id: str, published_at: datetime) -> None:
-        """Mark an article as published."""
+        """Mark a publication as published."""
 
 
 class GitHubPort(Protocol):
@@ -30,12 +29,12 @@ class GitHubPort(Protocol):
     def get_file_content(self, path: str) -> str | None:
         """Return existing content or ``None``."""
 
-    def create_file(self, path: str, content: str, message: str) -> None:
-        """Create and commit a file."""
+    def create_files(self, files: dict[str, str], message: str) -> None:
+        """Create multiple files in one commit."""
 
 
 class PublisherService:
-    """Publish every currently approved Notion article once."""
+    """Publish every currently approved bilingual Notion publication once."""
 
     def __init__(
         self,
@@ -46,15 +45,7 @@ class PublisherService:
         dry_run: bool = False,
         now: Callable[[], datetime] = datetime.now,
     ) -> None:
-        """Initialize the publication coordinator.
-
-        Args:
-            notion: Notion gateway.
-            github: GitHub gateway.
-            logger: Application logger.
-            dry_run: If true, do not write to GitHub or Notion.
-            now: Injectable clock used by tests.
-        """
+        """Initialize the publication coordinator."""
 
         self._notion = notion
         self._github = github
@@ -64,67 +55,64 @@ class PublisherService:
         self.had_errors = False
 
     def run(self) -> int:
-        """Execute one publication pass.
+        """Execute one publication pass and return the successful count."""
 
-        Returns:
-            Number of articles processed successfully.
-        """
-
-        articles = self._notion.get_articles_to_publish()
-        if not articles:
-            self._logger.info("Нових статей для публікації немає")
+        publications = self._notion.get_publications_to_publish()
+        if not publications:
+            self._logger.info("Нових публікацій немає")
             return 0
 
         published_count = 0
-        for article in articles:
+        for publication in publications:
             try:
-                result = self._publish_article(article)
+                result = self._publish(publication)
                 published_count += 1
                 if self._dry_run:
                     continue
                 action = "already exists" if result.already_exists else "published"
                 self._logger.info(
-                    "[OK] %s: %s -> %s", action, article.title, result.path
+                    "[OK] %s: %s -> %s",
+                    action,
+                    publication.name,
+                    ", ".join(result.paths),
                 )
             except Exception:
                 self.had_errors = True
-                self._logger.exception("[ERROR] Не вдалося опублікувати: %s", article.title)
+                self._logger.exception(
+                    "[ERROR] Не вдалося опублікувати: %s", publication.name
+                )
         self._logger.info(
-            "Публікацію завершено: %d з %d статей", published_count, len(articles)
+            "Публікацію завершено: %d з %d матеріалів",
+            published_count,
+            len(publications),
         )
         return published_count
 
-    def _publish_article(self, article: Article) -> PublicationResult:
-        """Publish one article and update Notion after GitHub succeeds."""
+    def _publish(self, publication: Publication) -> PublicationResult:
+        """Publish both language versions before updating Notion."""
 
-        content = render_article(article)
-        result = self._select_path(article, content)
+        paths = (
+            f"content/uk/blog/{publication.slug}.md",
+            f"content/en/blog/{publication.slug}.md",
+        )
+        expected = {
+            paths[0]: render_article(publication, publication.ua),
+            paths[1]: render_article(publication, publication.en),
+        }
+        missing: dict[str, str] = {}
+        for path, content in expected.items():
+            existing = self._github.get_file_content(path)
+            if existing is None:
+                missing[path] = content
+            elif existing != content:
+                raise ValueError(f"publication path already contains different content: {path}")
+
+        result = PublicationResult(paths=paths, already_exists=not missing)
         if self._dry_run:
-            self._logger.info("[DRY RUN] %s -> %s", article.title, result.path)
+            self._logger.info("[DRY RUN] %s -> %s", publication.name, ", ".join(paths))
             return result
 
-        if not result.already_exists:
-            self._github.create_file(
-                result.path,
-                content,
-                f"Publish article: {article.title}",
-            )
-        self._notion.mark_published(article.notion_page_id, self._now())
+        if missing:
+            self._github.create_files(missing, f"Publish article: {publication.name}")
+        self._notion.mark_published(publication.notion_page_id, self._now())
         return result
-
-    def _select_path(self, article: Article, content: str) -> PublicationResult:
-        """Find an unused path or recognize an identical previous commit."""
-
-        directory = "content/uk/blog" if article.language == "UA" else "content/en/blog"
-        base_slug = generate_slug(article.title)
-        suffix = 1
-        while True:
-            slug = base_slug if suffix == 1 else f"{base_slug}-{suffix}"
-            path = f"{directory}/{slug}.md"
-            existing_content = self._github.get_file_content(path)
-            if existing_content is None:
-                return PublicationResult(path=path, already_exists=False)
-            if existing_content == content:
-                return PublicationResult(path=path, already_exists=True)
-            self._logger.warning("[WARN] Slug already exists: %s", path)
-            suffix += 1

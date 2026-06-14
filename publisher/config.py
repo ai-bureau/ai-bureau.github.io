@@ -16,7 +16,7 @@ class Settings:
     """Hold all runtime configuration required by the publisher."""
 
     notion_token: str
-    notion_articles_data_source_id: str
+    notion_publications_data_source_id: str
     github_token: str
     github_repo: str
     github_branch: str
@@ -41,7 +41,7 @@ def load_settings(env_file: str | Path = ".env") -> Settings:
     load_dotenv(env_file)
     required_names = (
         "NOTION_TOKEN",
-        "NOTION_ARTICLES_DATA_SOURCE_ID",
+        "NOTION_PUBLICATIONS_DATA_SOURCE_ID",
         "GITHUB_TOKEN",
         "GITHUB_REPO",
     )
@@ -57,8 +57,8 @@ def load_settings(env_file: str | Path = ".env") -> Settings:
 
     return Settings(
         notion_token=os.environ["NOTION_TOKEN"].strip(),
-        notion_articles_data_source_id=os.environ[
-            "NOTION_ARTICLES_DATA_SOURCE_ID"
+        notion_publications_data_source_id=os.environ[
+            "NOTION_PUBLICATIONS_DATA_SOURCE_ID"
         ].strip(),
         github_token=os.environ["GITHUB_TOKEN"].strip(),
         github_repo=github_repo,
@@ -93,4 +93,3 @@ def _non_negative_float(name: str, default: float) -> float:
     if value < 0:
         raise ValueError(f"{name} cannot be negative")
     return value
-

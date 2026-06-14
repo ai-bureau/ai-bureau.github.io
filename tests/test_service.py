@@ -1,11 +1,11 @@
-"""Tests for end-to-end publisher coordination without external APIs."""
+"""Tests for bilingual publisher coordination without external APIs."""
 
 import logging
 from datetime import datetime
 
 import pytest
 
-from publisher.models import Article
+from publisher.models import ArticleVersion, Publication
 from publisher.renderer import render_article
 from publisher.service import PublisherService
 
@@ -13,14 +13,14 @@ from publisher.service import PublisherService
 class FakeNotion:
     """In-memory Notion port for service tests."""
 
-    def __init__(self, articles: list[Article]) -> None:
-        self.articles = articles
+    def __init__(self, publications: list[Publication]) -> None:
+        self.publications = publications
         self.marked: list[tuple[str, datetime]] = []
 
-    def get_articles_to_publish(self) -> list[Article]:
-        """Return configured test articles."""
+    def get_publications_to_publish(self) -> list[Publication]:
+        """Return configured test publications."""
 
-        return self.articles
+        return self.publications
 
     def mark_published(self, page_id: str, published_at: datetime) -> None:
         """Record status updates."""
@@ -37,7 +37,7 @@ class FakeGitHub:
         fail_create: bool = False,
     ) -> None:
         self.files = files or {}
-        self.created: list[str] = []
+        self.commits: list[dict[str, str]] = []
         self.fail_create = fail_create
 
     def get_file_content(self, path: str) -> str | None:
@@ -45,34 +45,33 @@ class FakeGitHub:
 
         return self.files.get(path)
 
-    def create_file(self, path: str, content: str, message: str) -> None:
-        """Create a file or simulate an API failure."""
+    def create_files(self, files: dict[str, str], message: str) -> None:
+        """Create files atomically or simulate an API failure."""
 
         if self.fail_create:
             raise RuntimeError("GitHub unavailable")
-        self.files[path] = content
-        self.created.append(path)
+        self.files.update(files)
+        self.commits.append(files)
 
 
-def make_article(title: str = "Test Article") -> Article:
-    """Create a valid article fixture."""
+def make_publication() -> Publication:
+    """Create a valid bilingual publication fixture."""
 
-    return Article(
+    return Publication(
         notion_page_id="page-1",
-        title=title,
-        source_url="https://example.com",
-        language="EN",
-        summary="Summary.",
-        added_at=datetime(2026, 6, 12),
+        name="Test Article",
+        slug="test-article",
         publish_at=datetime(2026, 6, 12),
         theses=("Thesis.",),
+        ua=ArticleVersion("UA", "Тестова стаття", "Короткий опис.", "Повний текст."),
+        en=ArticleVersion("EN", "Test Article", "Short description.", "Full text."),
     )
 
 
-def test_publish_creates_github_file_then_marks_notion() -> None:
-    """Normal publication writes GitHub and updates Notion."""
+def test_publish_creates_both_files_in_one_commit_then_marks_notion() -> None:
+    """Normal publication commits both versions before updating Notion."""
 
-    notion = FakeNotion([make_article()])
+    notion = FakeNotion([make_publication()])
     github = FakeGitHub()
     clock = datetime(2026, 6, 13, 9, 0)
 
@@ -84,39 +83,50 @@ def test_publish_creates_github_file_then_marks_notion() -> None:
     ).run()
 
     assert count == 1
-    assert github.created == ["content/en/blog/test-article.md"]
+    assert len(github.commits) == 1
+    assert set(github.commits[0]) == {
+        "content/uk/blog/test-article.md",
+        "content/en/blog/test-article.md",
+    }
     assert notion.marked == [("page-1", clock)]
 
 
-def test_slug_collision_adds_numeric_suffix() -> None:
-    """Different content at the preferred path produces a suffixed slug."""
+def test_different_existing_content_stops_publication() -> None:
+    """A stable slug collision does not silently create a different URL."""
 
-    notion = FakeNotion([make_article()])
+    notion = FakeNotion([make_publication()])
     github = FakeGitHub({"content/en/blog/test-article.md": "different"})
 
-    PublisherService(notion, github, logging.getLogger("test")).run()
+    service = PublisherService(notion, github, logging.getLogger("test"))
+    count = service.run()
 
-    assert github.created == ["content/en/blog/test-article-2.md"]
+    assert count == 0
+    assert github.commits == []
+    assert notion.marked == []
+    assert service.had_errors is True
 
 
-def test_identical_existing_file_repairs_notion_without_duplicate() -> None:
+def test_identical_existing_files_repair_notion_without_duplicate() -> None:
     """A prior GitHub success is recognized after a failed Notion update."""
 
-    article = make_article()
-    path = "content/en/blog/test-article.md"
-    notion = FakeNotion([article])
-    github = FakeGitHub({path: render_article(article)})
+    publication = make_publication()
+    files = {
+        "content/uk/blog/test-article.md": render_article(publication, publication.ua),
+        "content/en/blog/test-article.md": render_article(publication, publication.en),
+    }
+    notion = FakeNotion([publication])
+    github = FakeGitHub(files)
 
     PublisherService(notion, github, logging.getLogger("test")).run()
 
-    assert github.created == []
+    assert github.commits == []
     assert len(notion.marked) == 1
 
 
 def test_github_failure_does_not_mark_notion() -> None:
-    """Notion remains unchanged when GitHub cannot create the file."""
+    """Notion remains unchanged when GitHub cannot create the commit."""
 
-    notion = FakeNotion([make_article()])
+    notion = FakeNotion([make_publication()])
     github = FakeGitHub(fail_create=True)
 
     service = PublisherService(notion, github, logging.getLogger("test"))
@@ -127,12 +137,12 @@ def test_github_failure_does_not_mark_notion() -> None:
     assert service.had_errors is True
 
 
-def test_dry_run_writes_nothing_and_does_not_report_publication(
+def test_dry_run_writes_nothing_and_reports_both_paths(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """Dry-run validates paths without writes or a false publication message."""
+    """Dry-run validates both paths without external writes."""
 
-    notion = FakeNotion([make_article()])
+    notion = FakeNotion([make_publication()])
     github = FakeGitHub()
 
     with caplog.at_level(logging.INFO):
@@ -144,7 +154,8 @@ def test_dry_run_writes_nothing_and_does_not_report_publication(
         ).run()
 
     assert count == 1
-    assert github.created == []
+    assert github.commits == []
     assert notion.marked == []
-    assert "[DRY RUN] Test Article -> content/en/blog/test-article.md" in caplog.text
+    assert "content/uk/blog/test-article.md" in caplog.text
+    assert "content/en/blog/test-article.md" in caplog.text
     assert "[OK] published" not in caplog.text

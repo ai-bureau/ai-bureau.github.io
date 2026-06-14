@@ -1,7 +1,7 @@
-"""Publish Markdown files through the GitHub repository contents API.
+"""Publish Markdown files through the GitHub Git data and contents APIs.
 
 Input: repository path and UTF-8 Markdown content.
-Output: created GitHub commit or existing file content.
+Output: one atomic GitHub commit or existing file content.
 """
 
 import base64
@@ -76,25 +76,54 @@ class GitHubGateway:
         encoded_content = response.json().get("content", "")
         return base64.b64decode(encoded_content).decode("utf-8")
 
-    def create_file(self, path: str, content: str, message: str) -> None:
-        """Create a new Markdown file and commit it to the target branch.
+    def create_files(self, files: dict[str, str], message: str) -> None:
+        """Create multiple Markdown files in one commit.
 
         Args:
-            path: Repository-relative path.
-            content: UTF-8 Markdown content.
+            files: Repository-relative paths mapped to UTF-8 content.
             message: Git commit message.
         """
 
-        payload = {
-            "message": message,
-            "content": base64.b64encode(content.encode("utf-8")).decode("ascii"),
-            "branch": self._branch,
-        }
-        self._http.request(
-            "PUT",
-            self._content_url(path),
+        if not files:
+            raise ValueError("files cannot be empty")
+        head = self._http.request(
+            "GET",
+            f"{GITHUB_API_BASE}/repos/{self._repository}/git/ref/heads/{self._branch}",
+            expected_statuses={200},
+        ).json()["object"]["sha"]
+        base_tree = self._http.request(
+            "GET",
+            f"{GITHUB_API_BASE}/repos/{self._repository}/git/commits/{head}",
+            expected_statuses={200},
+        ).json()["tree"]["sha"]
+        tree_entries = []
+        for path, content in files.items():
+            blob = self._http.request(
+                "POST",
+                f"{GITHUB_API_BASE}/repos/{self._repository}/git/blobs",
+                expected_statuses={201},
+                json={"content": content, "encoding": "utf-8"},
+            ).json()
+            tree_entries.append(
+                {"path": path, "mode": "100644", "type": "blob", "sha": blob["sha"]}
+            )
+        tree = self._http.request(
+            "POST",
+            f"{GITHUB_API_BASE}/repos/{self._repository}/git/trees",
             expected_statuses={201},
-            json=payload,
+            json={"base_tree": base_tree, "tree": tree_entries},
+        ).json()
+        commit = self._http.request(
+            "POST",
+            f"{GITHUB_API_BASE}/repos/{self._repository}/git/commits",
+            expected_statuses={201},
+            json={"message": message, "tree": tree["sha"], "parents": [head]},
+        ).json()
+        self._http.request(
+            "PATCH",
+            f"{GITHUB_API_BASE}/repos/{self._repository}/git/refs/heads/{self._branch}",
+            expected_statuses={200},
+            json={"sha": commit["sha"], "force": False},
         )
 
     def _content_url(self, path: str) -> str:
@@ -102,4 +131,3 @@ class GitHubGateway:
 
         encoded_path = quote(path, safe="/")
         return f"{GITHUB_API_BASE}/repos/{self._repository}/contents/{encoded_path}"
-

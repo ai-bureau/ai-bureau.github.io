@@ -7,7 +7,7 @@
     {{ partial "breadcrumbs.html" . }}
     {{- if $isBlog }}
     <div class="bureau-article-label">
-      <span>{{ if $isUK }}Матеріал AI Bureau{{ else }}AI Bureau reading{{ end }}</span>
+      <span>{{ if $isUK }}Матеріал AI Bureau{{ else }}AI Bureau article{{ end }}</span>
       <span>{{ .Lang | upper }}</span>
     </div>
     {{- end }}
@@ -70,4 +70,3 @@
   </footer>
 </article>
 {{- end }}
-

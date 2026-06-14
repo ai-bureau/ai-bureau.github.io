@@ -40,7 +40,7 @@ def main() -> int:
         logger = configure_logging(settings.log_dir)
         notion = NotionGateway(
             settings.notion_token,
-            settings.notion_articles_data_source_id,
+            settings.notion_publications_data_source_id,
             settings.max_retries,
             settings.retry_pause_sec,
             logger,

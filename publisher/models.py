@@ -1,7 +1,7 @@
-"""Domain models used by the AI Bureau article publisher.
+"""Domain models used by the AI Bureau bilingual publication publisher.
 
-Input: validated values read from Notion.
-Output: immutable article and publication result objects.
+Input: validated publication values read from Notion.
+Output: immutable publication, language version, and result objects.
 """
 
 from dataclasses import dataclass
@@ -9,39 +9,53 @@ from datetime import datetime
 
 
 @dataclass(frozen=True)
-class Article:
-    """Represent one approved article ready for publication.
+class ArticleVersion:
+    """Represent one ready-to-publish language version.
+
+    Args:
+        language: Site language code, either ``UA`` or ``EN``.
+        title: Public article title.
+        description: Short description used by Hugo and search engines.
+        body: Complete Markdown body without front matter.
+    """
+
+    language: str
+    title: str
+    description: str
+    body: str
+
+
+@dataclass(frozen=True)
+class Publication:
+    """Represent one approved bilingual Notion publication.
 
     Args:
         notion_page_id: Notion page identifier used when updating status.
-        title: Public article title.
-        source_url: URL of the original article.
-        language: Notion language option, either ``UA`` or ``EN``.
-        summary: AI Bureau summary shown on the website.
-        added_at: Date the article was added to Notion.
+        name: Internal working name used in logs and commit messages.
+        slug: Stable URL slug shared by both language versions.
         publish_at: Date and optional time when Hugo may show the article.
         theses: Human-readable related thesis titles.
+        ua: Final Ukrainian version.
+        en: Final English version.
     """
 
     notion_page_id: str
-    title: str
-    source_url: str
-    language: str
-    summary: str
-    added_at: datetime
+    name: str
+    slug: str
     publish_at: datetime
     theses: tuple[str, ...]
+    ua: ArticleVersion
+    en: ArticleVersion
 
 
 @dataclass(frozen=True)
 class PublicationResult:
-    """Describe the GitHub path selected for an article.
+    """Describe repository paths selected for a bilingual publication.
 
     Args:
-        path: Repository-relative Markdown path.
-        already_exists: Whether identical content was already committed.
+        paths: Repository-relative Markdown paths.
+        already_exists: Whether both identical files were already committed.
     """
 
-    path: str
+    paths: tuple[str, str]
     already_exists: bool
-
